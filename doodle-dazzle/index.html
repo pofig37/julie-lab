@@ -161,6 +161,8 @@
     &nbsp;&nbsp;
     <button id="fillButton"><span class="icon">🪣</span><span>Fill</span></button>
     &nbsp;&nbsp;
+    <button id="undoButton">↩️ Undo</button>
+    &nbsp;&nbsp;
     <button id="saveButton">💾 Save</button>
     &nbsp;&nbsp;
     <button id="galleryButton">🖼️ My Gallery</button>
@@ -208,6 +210,7 @@
     const eraserButton = document.getElementById("eraserButton");
     const eraserSize = document.getElementById("eraserSize");
     const fillButton = document.getElementById("fillButton");
+    const undoButton = document.getElementById("undoButton");
     const saveButton = document.getElementById("saveButton");
     const galleryButton = document.getElementById("galleryButton");
     const galleryOverlay = document.getElementById("galleryOverlay");
@@ -220,6 +223,15 @@
     let isErasing = false;
     let lastX = 0;
     let lastY = 0;
+    let historyStack = [];
+    const MAX_HISTORY = 20;
+
+    function saveHistory() {
+      historyStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+      }
+    }
 
     // canvas can be shown smaller than its 600x400 resolution (e.g. on a phone),
     // so convert from on-screen pixels to canvas pixels using its actual size
@@ -234,6 +246,7 @@
     }
 
     function startDrawing(x, y) {
+      saveHistory();
       isDrawing = true;
       ctx.globalCompositeOperation = isErasing ? "destination-out" : "source-over";
       ctx.strokeStyle = colorPicker.value;
@@ -267,9 +280,16 @@
     });
 
     fillButton.addEventListener("click", function() {
+      saveHistory();
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = colorPicker.value;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+
+    undoButton.addEventListener("click", function() {
+      if (historyStack.length === 0) return;
+      const previous = historyStack.pop();
+      ctx.putImageData(previous, 0, 0);
     });
 
     canvas.addEventListener("mousedown", function(event) {
