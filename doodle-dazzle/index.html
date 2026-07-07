@@ -76,6 +76,75 @@
       font-weight: bold;
       color: #b83bff;
     }
+    #galleryButton {
+      background: linear-gradient(135deg, #b83bff, #ff3bb0);
+    }
+    #galleryOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+    }
+    #galleryOverlay.open {
+      display: flex;
+    }
+    #galleryBox {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    #galleryGrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin: 14px 0;
+    }
+    .thumb {
+      position: relative;
+      width: 100px;
+      height: 70px;
+      border: 3px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .thumb.selected {
+      border-color: #b83bff;
+    }
+    .thumb .check {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 1.2em;
+      display: none;
+    }
+    .thumb.selected .check {
+      display: block;
+    }
+    .thumb .published {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      background: #3bff6e;
+      color: #05051a;
+      font-size: 0.6em;
+      font-weight: bold;
+      border-radius: 6px;
+      padding: 1px 4px;
+    }
   </style>
 </head>
 <body>
@@ -91,8 +160,23 @@
     <label>Eraser size: <input type="range" id="eraserSize" min="5" max="60" value="20"></label>
     &nbsp;&nbsp;
     <button id="fillButton"><span class="icon">🪣</span><span>Fill</span></button>
+    &nbsp;&nbsp;
+    <button id="saveButton">💾 Save</button>
+    &nbsp;&nbsp;
+    <button id="galleryButton">🖼️ My Gallery</button>
   </p>
   <canvas id="canvas" width="600" height="400"></canvas>
+
+  <div id="galleryOverlay">
+    <div id="galleryBox">
+      <h2 style="color:#b83bff;">My Gallery</h2>
+      <p>Tap the drawings you want, then download them.</p>
+      <div id="galleryGrid"></div>
+      <button id="downloadSelectedButton">Download Selected</button>
+      &nbsp;&nbsp;
+      <button id="closeGalleryButton">Close</button>
+    </div>
+  </div>
 
   <script>
     const drawingIdeas = [
@@ -124,6 +208,14 @@
     const eraserButton = document.getElementById("eraserButton");
     const eraserSize = document.getElementById("eraserSize");
     const fillButton = document.getElementById("fillButton");
+    const saveButton = document.getElementById("saveButton");
+    const galleryButton = document.getElementById("galleryButton");
+    const galleryOverlay = document.getElementById("galleryOverlay");
+    const galleryGrid = document.getElementById("galleryGrid");
+    const downloadSelectedButton = document.getElementById("downloadSelectedButton");
+    const closeGalleryButton = document.getElementById("closeGalleryButton");
+    const GALLERY_KEY = "doodleDazzleGallery";
+    let selectedIds = [];
     let isDrawing = false;
     let isErasing = false;
     let lastX = 0;
@@ -210,6 +302,80 @@
     canvas.addEventListener("touchend", function(event) {
       event.preventDefault();
       stopDrawing();
+    });
+
+    function getGallery() {
+      const raw = localStorage.getItem(GALLERY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+
+    function setGallery(gallery) {
+      localStorage.setItem(GALLERY_KEY, JSON.stringify(gallery));
+    }
+
+    saveButton.addEventListener("click", function() {
+      const gallery = getGallery();
+      gallery.push({
+        id: Date.now() + "-" + Math.floor(Math.random() * 10000),
+        dataUrl: canvas.toDataURL("image/png")
+      });
+      setGallery(gallery);
+      saveButton.textContent = "Saved! ✅";
+      setTimeout(function() {
+        saveButton.textContent = "💾 Save";
+      }, 1200);
+    });
+
+    function renderGallery() {
+      const gallery = getGallery();
+      galleryGrid.innerHTML = "";
+      selectedIds = [];
+      gallery.forEach(function(item) {
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+        const badge = item.published ? '<span class="published">On Gallery</span>' : '';
+        thumb.innerHTML = '<img src="' + item.dataUrl + '"><span class="check">✅</span>' + badge;
+        thumb.addEventListener("click", function() {
+          const index = selectedIds.indexOf(item.id);
+          if (index === -1) {
+            selectedIds.push(item.id);
+            thumb.classList.add("selected");
+          } else {
+            selectedIds.splice(index, 1);
+            thumb.classList.remove("selected");
+          }
+        });
+        galleryGrid.appendChild(thumb);
+      });
+      if (gallery.length === 0) {
+        galleryGrid.textContent = "No saved drawings yet — hit Save on the canvas first!";
+      }
+    }
+
+    galleryButton.addEventListener("click", function() {
+      renderGallery();
+      galleryOverlay.classList.add("open");
+    });
+
+    closeGalleryButton.addEventListener("click", function() {
+      galleryOverlay.classList.remove("open");
+    });
+
+    downloadSelectedButton.addEventListener("click", function() {
+      const gallery = getGallery();
+      selectedIds.forEach(function(id, index) {
+        const item = gallery.find(function(g) { return g.id === id; });
+        if (!item) return;
+        const link = document.createElement("a");
+        link.href = item.dataUrl;
+        link.download = "doodle-dazzle-" + (index + 1) + ".png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        item.published = true;
+      });
+      setGallery(gallery);
+      renderGallery();
     });
   </script>
 </body>
