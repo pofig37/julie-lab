@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doodle Dazzle</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🦊✨</text></svg>">
   <style>
@@ -33,6 +34,8 @@
       cursor: crosshair;
       touch-action: none;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      max-width: 100%;
+      height: auto;
     }
     button {
       background: linear-gradient(135deg, #ff9a3b, #ff3bb0);
@@ -126,6 +129,46 @@
     let lastX = 0;
     let lastY = 0;
 
+    // canvas can be shown smaller than its 600x400 resolution (e.g. on a phone),
+    // so convert from on-screen pixels to canvas pixels using its actual size
+    function getPos(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function startDrawing(x, y) {
+      isDrawing = true;
+      ctx.globalCompositeOperation = isErasing ? "destination-out" : "source-over";
+      ctx.strokeStyle = colorPicker.value;
+      ctx.lineWidth = isErasing ? eraserSize.value : brushSize.value;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      lastX = x;
+      lastY = y;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+    }
+
+    function continueDrawing(x, y) {
+      if (!isDrawing) return;
+      // curve through the midpoint instead of a straight line, so corners round out
+      const midX = (lastX + x) / 2;
+      const midY = (lastY + y) / 2;
+      ctx.quadraticCurveTo(lastX, lastY, midX, midY);
+      ctx.stroke();
+      lastX = x;
+      lastY = y;
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
     eraserButton.addEventListener("click", function() {
       isErasing = !isErasing;
       eraserButton.textContent = isErasing ? "Draw" : "Eraser";
@@ -138,37 +181,35 @@
     });
 
     canvas.addEventListener("mousedown", function(event) {
-      isDrawing = true;
-      ctx.globalCompositeOperation = isErasing ? "destination-out" : "source-over";
-      ctx.strokeStyle = colorPicker.value;
-      ctx.lineWidth = isErasing ? eraserSize.value : brushSize.value;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      lastX = event.offsetX;
-      lastY = event.offsetY;
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
+      const pos = getPos(event.clientX, event.clientY);
+      startDrawing(pos.x, pos.y);
     });
 
     canvas.addEventListener("mousemove", function(event) {
-      if (!isDrawing) return;
-      const currX = event.offsetX;
-      const currY = event.offsetY;
-      // curve through the midpoint instead of a straight line, so corners round out
-      const midX = (lastX + currX) / 2;
-      const midY = (lastY + currY) / 2;
-      ctx.quadraticCurveTo(lastX, lastY, midX, midY);
-      ctx.stroke();
-      lastX = currX;
-      lastY = currY;
+      const pos = getPos(event.clientX, event.clientY);
+      continueDrawing(pos.x, pos.y);
     });
 
-    canvas.addEventListener("mouseup", function() {
-      isDrawing = false;
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
+
+    canvas.addEventListener("touchstart", function(event) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      const pos = getPos(touch.clientX, touch.clientY);
+      startDrawing(pos.x, pos.y);
     });
 
-    canvas.addEventListener("mouseleave", function() {
-      isDrawing = false;
+    canvas.addEventListener("touchmove", function(event) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      const pos = getPos(touch.clientX, touch.clientY);
+      continueDrawing(pos.x, pos.y);
+    });
+
+    canvas.addEventListener("touchend", function(event) {
+      event.preventDefault();
+      stopDrawing();
     });
   </script>
 </body>
