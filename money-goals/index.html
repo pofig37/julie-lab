@@ -343,6 +343,34 @@
     text-align: center;
   }
 
+  #goalHero .count {
+    margin-top: 0.4rem;
+    font-size: 1rem;
+    color: #5f6368;
+    text-align: center;
+  }
+
+  #nextGoalBtn {
+    display: none;
+    margin: 1rem auto 0;
+    padding: 0.6rem 1.4rem;
+    font-size: 1rem;
+    border: 0.125rem solid #2e7d32;
+    background: white;
+    color: #2e7d32;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #nextGoalBtn.shown {
+    display: block;
+  }
+
+  #nextGoalBtn:active {
+    background: #f2f6f2;
+  }
+
   .mainRow {
     display: flex;
     flex-direction: column;
@@ -388,7 +416,10 @@
 </div>
 
 <div id="app">
-  <div id="goalHero"></div>
+  <div id="goalHero">
+    <div id="goalHeroContent"></div>
+    <button id="nextGoalBtn">Next Goal ▶</button>
+  </div>
 
   <div class="sheetsChrome">
     <div class="titleBar">💸 <span id="greeting">My Money Goals</span> <button id="saveBtn">💾 Save</button></div>
@@ -514,22 +545,32 @@
   const customGoalEnterBtn = document.getElementById('customGoalEnterBtn');
 
   let savedCustomGoals = [];
+  let currentGoalIndex = 0;
 
   const goalHero = document.getElementById('goalHero');
+  const goalHeroContent = document.getElementById('goalHeroContent');
+  const nextGoalBtn = document.getElementById('nextGoalBtn');
 
   function renderGoalHero() {
     if (savedCustomGoals.length === 0) {
       goalHero.classList.remove('shown');
       return;
     }
-    const g = savedCustomGoals[0];
+    const g = savedCustomGoals[currentGoalIndex];
     const percent = Math.min(100, (balance / g.cost) * 100);
     const remaining = Math.max(0, g.cost - balance);
-    goalHero.innerHTML = '<h2>🎯 ' + g.name + ' Goal: $' + g.cost.toFixed(2) + '</h2>' +
+    goalHeroContent.innerHTML = '<h2>🎯 ' + g.name + ' Goal: $' + g.cost.toFixed(2) + '</h2>' +
       '<div class="bar"><div class="fill" style="width:' + percent + '%"></div></div>' +
-      '<div class="text">$' + balance.toFixed(2) + ' saved — $' + remaining.toFixed(2) + ' to go!</div>';
+      '<div class="text">$' + balance.toFixed(2) + ' saved — $' + remaining.toFixed(2) + ' to go!</div>' +
+      '<div class="count">Goal ' + (currentGoalIndex + 1) + ' of ' + savedCustomGoals.length + '</div>';
     goalHero.classList.add('shown');
+    nextGoalBtn.classList.toggle('shown', savedCustomGoals.length > 1);
   }
+
+  nextGoalBtn.addEventListener('click', () => {
+    currentGoalIndex = (currentGoalIndex + 1) % savedCustomGoals.length;
+    renderGoalHero();
+  });
 
   function addCustomGoal(name, cost) {
     renderGoalHero();
