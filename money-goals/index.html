@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Money Goals</title>
+<style>
+  img { max-width: 100%; height: auto; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f7f9f7;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    box-sizing: border-box;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    color: #1b5e20;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+
+  .form-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    background: white;
+    border-radius: 0;
+    padding: 1.2rem;
+    width: 100%;
+    max-width: 40rem;
+    box-sizing: border-box;
+    border: 0.125rem solid #d0d6d0;
+    margin: 1.5rem 0;
+  }
+
+  .form-box input {
+    flex: 1 1 10rem;
+    padding: 0.7rem;
+    font-size: 1.1rem;
+    border-radius: 0;
+    border: 0.0625rem solid #c8cec8;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+
+  #addBtn {
+    padding: 0.7rem 1.5rem;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 0;
+    background: #2e7d32;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #addBtn:active {
+    background: #1b5e20;
+  }
+
+  #sheetWrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 0.125rem solid #b0b8b0;
+  }
+
+  #sheetTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 1rem;
+  }
+
+  #sheetTable th {
+    background: #2e7d32;
+    color: white;
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border: 0.0625rem solid #1b5e20;
+    white-space: nowrap;
+  }
+
+  #sheetTable .colLetters th {
+    background: #e8eae8;
+    color: #5f6368;
+    font-weight: normal;
+    text-align: center;
+    border: 0.0625rem solid #d0d6d0;
+  }
+
+  #sheetTable td:first-child {
+    background: #e8eae8;
+    color: #5f6368;
+    text-align: center;
+    font-weight: normal;
+  }
+
+  #sheetTable td {
+    padding: 0.6rem 0.8rem;
+    border: 0.0625rem solid #d0d6d0;
+    white-space: nowrap;
+  }
+
+  #sheetTable tr:nth-child(even) td {
+    background: #f2f6f2;
+  }
+
+  #welcomeScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    width: 100%;
+    max-width: 24rem;
+    text-align: center;
+  }
+
+  #welcomeScreen h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  #nameInput {
+    width: 100%;
+    max-width: 20rem;
+    padding: 0.8rem;
+    font-size: 1.2rem;
+    border-radius: 0;
+    border: 0.125rem solid #c8cec8;
+    box-sizing: border-box;
+    font-family: inherit;
+    margin-bottom: 1rem;
+  }
+
+  #enterBtn {
+    padding: 0.8rem 2rem;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 0;
+    background: #2e7d32;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #enterBtn:active {
+    background: #1b5e20;
+  }
+
+  #app {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #app.shown {
+    display: flex;
+    animation: popIn 0.4s ease;
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    60% { transform: scale(1.03); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  #greeting {
+    font-size: 1.2rem;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .sheetsChrome {
+    width: 100%;
+    max-width: 40rem;
+  }
+
+  .titleBar {
+    background: #0f9d58;
+    color: white;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  #saveBtn {
+    margin-left: auto;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    border: none;
+    background: white;
+    color: #1b5e20;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #saveBtn:active {
+    background: #e8eae8;
+  }
+
+  .formulaBar {
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 1rem;
+    border-bottom: 0.0625rem solid #d0d6d0;
+    font-size: 0.9rem;
+    color: #5f6368;
+  }
+
+  .formulaBar span {
+    font-style: italic;
+    color: #1a73e8;
+  }
+
+  .tabBar {
+    background: #f1f3f4;
+    padding: 0.4rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .tabBar .tab {
+    background: white;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    color: #0f9d58;
+    border-top: 0.125rem solid #0f9d58;
+  }
+
+  #addRowBtn {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border: 0.125rem solid #2e7d32;
+    border-radius: 0;
+    background: white;
+    color: #2e7d32;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #addRowBtn:active {
+    background: #f2f6f2;
+  }
+
+  #customGoalBox label {
+    font-weight: 600;
+    color: #1b5e20;
+    align-self: center;
+  }
+
+  #customGoalEnterBtn {
+    padding: 0.7rem 1.5rem;
+    font-size: 1.1rem;
+    border: none;
+    background: #2e7d32;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  #customGoalEnterBtn:active {
+    background: #1b5e20;
+  }
+
+  .customGoal {
+    width: 100%;
+    max-width: 40rem;
+    background: white;
+    border: 0.125rem solid #d0d6d0;
+    padding: 1rem 1.2rem;
+    box-sizing: border-box;
+    margin-top: 1rem;
+  }
+
+  .customGoal { border-left: 0.5rem solid #2e7d32; box-shadow: 0 0.15rem 0.5rem rgba(0,0,0,0.08); }
+  .customGoal h2 { margin: 0 0 0.6rem 0; font-size: 1.5rem; color: #1b5e20; }
+  .customGoal .bar { width: 100%; height: 1.8rem; background: #e8eae8; border: 0.0625rem solid #c8cec8; }
+  .customGoal .fill { height: 100%; background: #2e7d32; }
+  .customGoal .text { margin-top: 0.5rem; font-size: 1.15rem; font-weight: 600; color: #1b5e20; }
+
+  #goalHero {
+    display: none;
+    width: 100%;
+    max-width: 84rem;
+    background: white;
+    border: 0.25rem solid #2e7d32;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    box-sizing: border-box;
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.12);
+  }
+
+  #goalHero.shown { display: block; }
+
+  #goalHero h2 {
+    margin: 0 0 0.8rem 0;
+    font-size: 2rem;
+    color: #1b5e20;
+    text-align: center;
+    font-weight: 800;
+  }
+
+  #goalHero .bar {
+    width: 100%;
+    height: 2.5rem;
+    background: #e8eae8;
+    border: 0.125rem solid #c8cec8;
+  }
+
+  #goalHero .fill {
+    height: 100%;
+    background: #2e7d32;
+  }
+
+  #goalHero .text {
+    margin-top: 0.8rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1b5e20;
+    text-align: center;
+  }
+
+  .mainRow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 84rem;
+  }
+
+  .sheetCol, .goalCol {
+    width: 100%;
+    max-width: 40rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  @media (min-width: 48rem) {
+    .mainRow {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+
+    .sheetCol {
+      max-width: none;
+      flex: 1 1 0;
+    }
+
+    .goalCol {
+      max-width: 22rem;
+      flex: 0 1 22rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="welcomeScreen">
+  <h1>💸 My Money Goals</h1>
+  <input type="text" id="nameInput" placeholder="Type your name...">
+  <button id="enterBtn">Enter 💥</button>
+</div>
+
+<div id="app">
+  <div id="goalHero"></div>
+
+  <div class="sheetsChrome">
+    <div class="titleBar">💸 <span id="greeting">My Money Goals</span> <button id="saveBtn">💾 Save</button></div>
+    <div class="formulaBar">fx <span>A1</span></div>
+  </div>
+
+  <div class="mainRow">
+    <div class="goalCol">
+      <div id="customGoalBox" class="form-box">
+        <label for="customGoalName">Goal</label>
+        <input type="text" id="customGoalName" placeholder="What for?">
+        <label for="customGoalCost">Cost</label>
+        <input type="number" id="customGoalCost" placeholder="$0.00" min="0" step="0.01">
+        <button id="customGoalEnterBtn">Enter 💥</button>
+      </div>
+
+    </div>
+
+    <div class="sheetCol">
+      <div class="form-box">
+        <input type="date" id="dateInput">
+        <input type="text" id="lessonInput" placeholder="Lesson type">
+        <input type="number" id="paymentInput" placeholder="Payment ($)" min="0" step="0.01">
+        <button id="addBtn">Add</button>
+      </div>
+
+      <div id="sheetWrap">
+        <table id="sheetTable">
+          <thead>
+            <tr class="colLetters"><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+            <tr><th>#</th><th>Date</th><th>Lesson</th><th>Payment</th><th>Balance</th></tr>
+          </thead>
+          <tbody id="lessonList"></tbody>
+        </table>
+      </div>
+
+      <div class="tabBar"><div class="tab">Sheet1</div></div>
+
+      <button id="addRowBtn">➕ Add more cells</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const welcomeScreen = document.getElementById('welcomeScreen');
+  const nameInput = document.getElementById('nameInput');
+  const enterBtn = document.getElementById('enterBtn');
+  const app = document.getElementById('app');
+  const greeting = document.getElementById('greeting');
+
+  const dateInput = document.getElementById('dateInput');
+  const lessonInput = document.getElementById('lessonInput');
+  const paymentInput = document.getElementById('paymentInput');
+  const addBtn = document.getElementById('addBtn');
+  const lessonList = document.getElementById('lessonList');
+  let balance = 0;
+  const EMPTY_ROWS = 12;
+
+  function addEmptyRow() {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td>' + (lessonList.children.length + 1) + '</td><td></td><td></td><td></td><td></td>';
+    lessonList.appendChild(row);
+  }
+
+  function initGrid() {
+    for (let i = 1; i <= EMPTY_ROWS; i++) addEmptyRow();
+  }
+
+  let currentName = '';
+
+  function enterApp() {
+    const name = nameInput.value.trim();
+    if (!name) return;
+    currentName = name;
+    greeting.textContent = 'My Money Goals — Welcome, ' + name + '! 💥';
+    welcomeScreen.style.display = 'none';
+    app.classList.add('shown');
+  }
+
+  enterBtn.addEventListener('click', enterApp);
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') enterApp();
+  });
+
+  function addLessonRow(date, lesson, payment) {
+    balance += payment;
+
+    let targetRow = Array.from(lessonList.children).find(
+      row => row.children[1].textContent.trim() === ''
+    );
+    if (!targetRow) {
+      addEmptyRow();
+      targetRow = lessonList.lastElementChild;
+    }
+
+    targetRow.children[1].textContent = date;
+    targetRow.children[2].textContent = lesson;
+    targetRow.children[3].textContent = '$' + payment.toFixed(2);
+    targetRow.children[4].textContent = '$' + balance.toFixed(2);
+
+    renderGoalHero();
+  }
+
+  addBtn.addEventListener('click', () => {
+    if (!dateInput.value || !lessonInput.value.trim() || paymentInput.value === '') return;
+
+    addLessonRow(dateInput.value, lessonInput.value, parseFloat(paymentInput.value));
+
+    dateInput.value = '';
+    lessonInput.value = '';
+    paymentInput.value = '';
+  });
+
+  const addRowBtn = document.getElementById('addRowBtn');
+  addRowBtn.addEventListener('click', () => {
+    for (let i = 0; i < 5; i++) addEmptyRow();
+  });
+
+  initGrid();
+
+  const customGoalName = document.getElementById('customGoalName');
+  const customGoalCost = document.getElementById('customGoalCost');
+  const customGoalEnterBtn = document.getElementById('customGoalEnterBtn');
+
+  let savedCustomGoals = [];
+
+  const goalHero = document.getElementById('goalHero');
+
+  function renderGoalHero() {
+    if (savedCustomGoals.length === 0) {
+      goalHero.classList.remove('shown');
+      return;
+    }
+    const g = savedCustomGoals[0];
+    const percent = Math.min(100, (balance / g.cost) * 100);
+    const remaining = Math.max(0, g.cost - balance);
+    goalHero.innerHTML = '<h2>🎯 ' + g.name + ' Goal: $' + g.cost.toFixed(2) + '</h2>' +
+      '<div class="bar"><div class="fill" style="width:' + percent + '%"></div></div>' +
+      '<div class="text">$' + balance.toFixed(2) + ' saved — $' + remaining.toFixed(2) + ' to go!</div>';
+    goalHero.classList.add('shown');
+  }
+
+  function addCustomGoal(name, cost) {
+    renderGoalHero();
+  }
+
+  customGoalEnterBtn.addEventListener('click', () => {
+    const name = customGoalName.value.trim();
+    const cost = parseFloat(customGoalCost.value);
+    if (!name || !cost) return;
+
+    savedCustomGoals.push({ name: name, cost: cost });
+    addCustomGoal(name, cost);
+
+    customGoalName.value = '';
+    customGoalCost.value = '';
+  });
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.addEventListener('click', () => {
+    localStorage.setItem('mmg_name', currentName);
+
+    const savedLessons = Array.from(lessonList.children)
+      .filter(row => row.children[1].textContent.trim() !== '')
+      .map(row => ({
+        date: row.children[1].textContent,
+        lesson: row.children[2].textContent,
+        payment: parseFloat(row.children[3].textContent.replace('$', ''))
+      }));
+    localStorage.setItem('mmg_lessons', JSON.stringify(savedLessons));
+    localStorage.setItem('mmg_goals', JSON.stringify(savedCustomGoals));
+  });
+
+  const savedName = localStorage.getItem('mmg_name');
+  if (savedName) {
+    currentName = savedName;
+    greeting.textContent = 'My Money Goals — Welcome, ' + savedName + '! 💥';
+    welcomeScreen.style.display = 'none';
+    app.classList.add('shown');
+
+    const savedLessonsRaw = localStorage.getItem('mmg_lessons');
+    if (savedLessonsRaw) {
+      JSON.parse(savedLessonsRaw).forEach(entry => addLessonRow(entry.date, entry.lesson, entry.payment));
+    }
+
+    const savedGoalsRaw = localStorage.getItem('mmg_goals');
+    if (savedGoalsRaw) {
+      JSON.parse(savedGoalsRaw).forEach(g => {
+        savedCustomGoals.push(g);
+        addCustomGoal(g.name, g.cost);
+      });
+    }
+  }
+</script>
+
+</body>
+</html>
