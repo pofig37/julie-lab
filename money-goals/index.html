@@ -264,6 +264,21 @@
     background: #f2f6f2;
   }
 
+  .delBtn {
+    border: none;
+    background: #e57373;
+    color: white;
+    border-radius: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  .delBtn:active {
+    background: #c62828;
+  }
+
   #customGoalBox label {
     font-weight: 600;
     color: #1b5e20;
@@ -449,8 +464,8 @@
       <div id="sheetWrap">
         <table id="sheetTable">
           <thead>
-            <tr class="colLetters"><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
-            <tr><th>#</th><th>Date</th><th>Lesson</th><th>Payment</th><th>Balance</th></tr>
+            <tr class="colLetters"><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+            <tr><th>#</th><th>Date</th><th>Lesson</th><th>Payment</th><th>Balance</th><th></th></tr>
           </thead>
           <tbody id="lessonList"></tbody>
         </table>
@@ -477,15 +492,41 @@
   const lessonList = document.getElementById('lessonList');
   let balance = 0;
   const EMPTY_ROWS = 12;
+  let lessons = [];
+  let extraRows = 0;
 
-  function addEmptyRow() {
-    const row = document.createElement('tr');
-    row.innerHTML = '<td>' + (lessonList.children.length + 1) + '</td><td></td><td></td><td></td><td></td>';
-    lessonList.appendChild(row);
+  function renderRows() {
+    lessonList.innerHTML = '';
+    const totalRows = Math.max(EMPTY_ROWS + extraRows, lessons.length);
+    let running = 0;
+    for (let i = 0; i < totalRows; i++) {
+      const row = document.createElement('tr');
+      if (i < lessons.length) {
+        const entry = lessons[i];
+        running += entry.payment;
+        row.innerHTML = '<td>' + (i + 1) + '</td>' +
+          '<td>' + entry.date + '</td>' +
+          '<td>' + entry.lesson + '</td>' +
+          '<td>$' + entry.payment.toFixed(2) + '</td>' +
+          '<td>$' + running.toFixed(2) + '</td>' +
+          '<td><button class="delBtn" data-index="' + i + '">✕</button></td>';
+      } else {
+        row.innerHTML = '<td>' + (i + 1) + '</td><td></td><td></td><td></td><td></td><td></td>';
+      }
+      lessonList.appendChild(row);
+    }
+    balance = running;
+    lessonList.querySelectorAll('.delBtn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        lessons.splice(parseInt(btn.dataset.index, 10), 1);
+        renderRows();
+        renderGoalHero();
+      });
+    });
   }
 
   function initGrid() {
-    for (let i = 1; i <= EMPTY_ROWS; i++) addEmptyRow();
+    renderRows();
   }
 
   let currentName = '';
@@ -505,21 +546,8 @@
   });
 
   function addLessonRow(date, lesson, payment) {
-    balance += payment;
-
-    let targetRow = Array.from(lessonList.children).find(
-      row => row.children[1].textContent.trim() === ''
-    );
-    if (!targetRow) {
-      addEmptyRow();
-      targetRow = lessonList.lastElementChild;
-    }
-
-    targetRow.children[1].textContent = date;
-    targetRow.children[2].textContent = lesson;
-    targetRow.children[3].textContent = '$' + payment.toFixed(2);
-    targetRow.children[4].textContent = '$' + balance.toFixed(2);
-
+    lessons.push({ date: date, lesson: lesson, payment: payment });
+    renderRows();
     renderGoalHero();
   }
 
@@ -535,7 +563,8 @@
 
   const addRowBtn = document.getElementById('addRowBtn');
   addRowBtn.addEventListener('click', () => {
-    for (let i = 0; i < 5; i++) addEmptyRow();
+    extraRows += 5;
+    renderRows();
   });
 
   initGrid();
@@ -591,15 +620,7 @@
   const saveBtn = document.getElementById('saveBtn');
   saveBtn.addEventListener('click', () => {
     localStorage.setItem('mmg_name', currentName);
-
-    const savedLessons = Array.from(lessonList.children)
-      .filter(row => row.children[1].textContent.trim() !== '')
-      .map(row => ({
-        date: row.children[1].textContent,
-        lesson: row.children[2].textContent,
-        payment: parseFloat(row.children[3].textContent.replace('$', ''))
-      }));
-    localStorage.setItem('mmg_lessons', JSON.stringify(savedLessons));
+    localStorage.setItem('mmg_lessons', JSON.stringify(lessons));
     localStorage.setItem('mmg_goals', JSON.stringify(savedCustomGoals));
   });
 
@@ -612,7 +633,8 @@
 
     const savedLessonsRaw = localStorage.getItem('mmg_lessons');
     if (savedLessonsRaw) {
-      JSON.parse(savedLessonsRaw).forEach(entry => addLessonRow(entry.date, entry.lesson, entry.payment));
+      lessons = JSON.parse(savedLessonsRaw);
+      renderRows();
     }
 
     const savedGoalsRaw = localStorage.getItem('mmg_goals');
