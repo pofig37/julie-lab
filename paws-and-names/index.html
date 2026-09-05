@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paws and Names</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+  img { max-width: 100%; height: auto; }
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Georgia, serif;
+    background: #f4f1ea;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  h1 {
+    font-size: 1.6rem;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    text-align: center;
+    color: #3a3a3a;
+  }
+  #page1 {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 24rem;
+    gap: 1rem;
+    flex: 1;
+  }
+  .bigBtn {
+    font-family: Georgia, serif;
+    font-size: 2rem;
+    flex: 1;
+    border-radius: 0.6rem;
+    border: 1px solid #d8d2c4;
+    background: #ffffff;
+    color: #3a3a3a;
+    cursor: pointer;
+  }
+  .bigBtn:active {
+    background: #5f6f52;
+    color: white;
+  }
+  #page2 {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .petBtn {
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 0.4rem;
+    border: 1px solid #d8d2c4;
+    background: #ffffff;
+    color: #3a3a3a;
+    cursor: pointer;
+    margin-top: 0.75rem;
+  }
+  .selected {
+    background: #2f6fed !important;
+    color: white !important;
+    border-color: #2f6fed !important;
+  }
+  h1.spinning {
+    font-size: 3rem;
+  }
+  .stopBtn {
+    font-family: Georgia, serif;
+    font-size: 1.5rem;
+    padding: 1rem 2rem;
+    border-radius: 0.4rem;
+    border: none;
+    background: #d64545;
+    color: white;
+    cursor: pointer;
+    margin-top: 0.75rem;
+  }
+  #answers {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 20rem;
+  }
+  #answers.scaleRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: none;
+  }
+  .confetti {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    top: 50%;
+    left: 50%;
+    opacity: 1;
+    pointer-events: none;
+    transition: transform 3s linear, opacity 3s linear;
+  }
+  .numBtn {
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 0.3rem;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+<div id="page1">
+  <h1 style="text-align: center; font-family: 'Fredoka', 'Comic Sans MS', cursive; font-weight: 700; font-size: 3.2rem; color: #d9534f; transform: rotate(-2deg); text-shadow: 3px 3px 0 #fff, 5px 5px 0 #3a3a3a;">🐾 Paws and Names 🐾</h1>
+  <p style="text-align: center; color: #3a3a3a; font-size: 1.4rem;">If your new companion is a cat, choose Cat Quiz. If your new companion is a dog, choose Dog Quiz!</p>
+  <button class="bigBtn" onclick="startQuiz('dog')">🐶 Dog Quiz</button>
+  <button class="bigBtn" onclick="startQuiz('cat')">🐱 Cat Quiz</button>
+</div>
+<div id="page2">
+  <h1 id="question"></h1>
+  <div id="answers"></div>
+  <button class="petBtn" onclick="goBack()">‹ Back</button>
+</div>
+<script>
+  const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+  const questions = [
+    {
+      text: function (type) { return 'What color is your ' + type + '?'; },
+      options: ['Golden', 'Black', 'Black and White', 'Chocolate Brown', 'White and Brown', 'White, Brown, and Black', 'Ginger', 'Tabby', 'White']
+    },
+    {
+      text: function (type) { return 'Is your ' + type + ' a boy or a girl?'; },
+      options: ['Boy', 'Girl']
+    },
+    {
+      text: function () { return 'Are there any children living there?'; },
+      options: ['Yes, they live here', 'They visit sometimes', 'No, there are no children']
+    },
+    {
+      text: function () { return 'How playful is the pet?'; },
+      options: ['Very playful', 'Somewhat playful', 'Calm']
+    },
+    {
+      text: function () { return 'On a scale of 1 to 10, how much is this pet your dream pet?'; },
+      type: 'scale',
+      options: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    },
+    {
+      text: function () { return 'How much does your pet like to go outside?'; },
+      options: ['Loves to roam free', 'Likes both', 'A couch leopard']
+    }
+  ];
+
+  const namesByColor = {
+    'Golden': {
+      boy: ['Chester', 'Bagel'],
+      girl: ['Goldy', 'Fusilli', 'Bagel']
+    },
+    'Black': {
+      boy: ['Rocket', 'Rocky'],
+      girl: ['Jackie', 'Midnight']
+    },
+    'Black and White': {
+      boy: ['Milo', 'Jingle', 'Socks', 'Astro'],
+      girl: ['Jingle', 'Socks', 'Astro']
+    },
+    'Chocolate Brown': {
+      boy: ['Bear', 'Dusty', 'Rusty'],
+      girl: ['Coco', 'Fern']
+    },
+    'White and Brown': {
+      boy: ['Pumpkin', 'Muffins', 'Beans'],
+      girl: ['Ruby', 'Sunny', 'Pumpkin', 'Muffins', 'Beans']
+    },
+    'White, Brown, and Black': {
+      boy: ['Comet'],
+      girl: ['Callie', 'Abby', 'Rosie']
+    },
+    'Ginger': {
+      boy: ['Garfield', 'Dorito', 'Blaze', 'Ron', 'Biscuits', 'Mars'],
+      girl: ['Ginger', 'Ruby', 'Biscuits', 'Mars']
+    },
+    'Tabby': {
+      boy: ['Toasty', 'Stripes'],
+      girl: ['Pi', 'Tabby', 'Tara', 'Toasty', 'Stripes']
+    },
+    'White': {
+      boy: ['Cloud', 'Dandy'],
+      girl: ['Snowy', 'Sally', 'Snowflake', 'Cotton', 'Cloud', 'Dandy']
+    }
+  };
+
+  let quizType = '';
+  let questionIndex = 0;
+  let quizAnswers = [];
+
+  function startQuiz(type) {
+    quizType = type;
+    questionIndex = 0;
+    quizAnswers = [];
+    showQuestion();
+    document.getElementById('page1').style.display = 'none';
+    document.getElementById('page2').style.display = 'flex';
+  }
+
+  function showQuestion() {
+    const q = questions[questionIndex];
+    document.getElementById('question').textContent = q.text(quizType);
+    const answers = document.getElementById('answers');
+    answers.innerHTML = '';
+    answers.classList.toggle('scaleRow', q.type === 'scale');
+    let options = q.options;
+    if (questionIndex === 0 && quizType === 'dog') {
+      options = options.filter(function (o) { return o !== 'Ginger' && o !== 'Tabby'; });
+    }
+    options.forEach(function (option, i) {
+      const btn = document.createElement('button');
+      if (q.type === 'scale') {
+        btn.className = 'numBtn';
+        btn.textContent = option;
+        const hue = Math.round((i / (options.length - 1)) * 120);
+        btn.style.backgroundColor = 'hsl(' + hue + ', 75%, 45%)';
+      } else {
+        btn.className = 'petBtn';
+        btn.textContent = letters[i] + ') ' + option;
+      }
+      btn.onclick = function () {
+        document.querySelectorAll('#answers button').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        quizAnswers.push(option);
+        setTimeout(function () {
+          questionIndex++;
+          if (questionIndex < questions.length) {
+            showQuestion();
+          } else {
+            startSpin();
+          }
+        }, 500);
+      };
+      answers.appendChild(btn);
+    });
+  }
+
+  let spinInterval = null;
+  let audioCtx = null;
+
+  function playDing() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = 1400;
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.08);
+  }
+
+  function startSpin() {
+    const petColor = quizAnswers[0];
+    const petGender = quizAnswers[1].toLowerCase();
+    const names = namesByColor[petColor][petGender];
+    document.getElementById('answers').innerHTML = '';
+    document.getElementById('question').classList.add('spinning');
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'stopBtn';
+    stopBtn.textContent = 'Stop';
+    stopBtn.onclick = function () {
+      clearInterval(spinInterval);
+      const finalName = document.getElementById('question').textContent;
+      document.getElementById('question').classList.remove('spinning');
+      document.getElementById('question').textContent = 'Congratulations to you and ' + finalName + '!';
+      document.getElementById('answers').innerHTML = '';
+      burstConfetti();
+    };
+    document.getElementById('answers').appendChild(stopBtn);
+    let tickCount = 0;
+    spinInterval = setInterval(function () {
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      document.getElementById('question').textContent = randomName;
+      tickCount++;
+      if (tickCount % 3 === 0) {
+        playDing();
+      }
+    }, 25);
+  }
+
+  function burstConfetti() {
+    const colors = ['pink', 'green', 'red', 'yellow', 'blue', 'purple'];
+    const spawner = setInterval(function () {
+      for (let i = 0; i < 90; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        document.body.appendChild(piece);
+        const x = (Math.random() - 0.5) * window.innerWidth;
+        const y = (Math.random() - 0.5) * window.innerHeight;
+        setTimeout(function () {
+          piece.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+          piece.style.opacity = '0';
+        }, 10);
+        setTimeout(function () {
+          piece.remove();
+        }, 3100);
+      }
+    }, 100);
+    setTimeout(function () {
+      clearInterval(spawner);
+    }, 10000);
+  }
+
+  function playNote(freq, volume, dur) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+
+    const overtone = audioCtx.createOscillator();
+    const overtoneGain = audioCtx.createGain();
+    overtone.type = 'sawtooth';
+    overtone.frequency.value = freq * 2;
+    overtoneGain.gain.setValueAtTime(volume * 0.3, audioCtx.currentTime);
+    overtoneGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    overtone.connect(overtoneGain);
+    overtoneGain.connect(audioCtx.destination);
+    overtone.start();
+    overtone.stop(audioCtx.currentTime + dur);
+  }
+
+  function playBell(freq, volume, dur) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  }
+
+  function playFanfare() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach(function (freq, i) {
+      setTimeout(function () {
+        playBell(freq, 0.25, 0.5);
+      }, i * 200);
+    });
+  }
+
+  function goBack() {
+    document.getElementById('page2').style.display = 'none';
+    document.getElementById('page1').style.display = 'flex';
+  }
+</script>
+</body>
+</html>
